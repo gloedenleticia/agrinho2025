@@ -1,10 +1,4 @@
-function setup() {
-  createCanvas(400, 400);
-}
-
-function draw() {
-  background(220);
-  let player;
+let player;
 let obstacles = [];
 let score = 0;
 let gameOver = false;
