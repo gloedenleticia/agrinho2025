@@ -4,147 +4,121 @@ function setup() {
 
 function draw() {
   background(220);
-// Definir variáveis
-let player;
+  let player;
 let obstacles = [];
 let score = 0;
 let gameOver = false;
 
 function setup() {
-  createCanvas(400, 600);
+  createCanvas(400, 400);
   player = new Player();
 }
 
 function draw() {
-  background(220);
+  background(200, 255, 200); // Cor do fundo, simula o campo
 
+  // Se o jogo acabou, mostra a tela de "Game Over"
   if (gameOver) {
-    textAlign(CENTER, CENTER);
     textSize(32);
+    textAlign(CENTER, CENTER);
     fill(0);
-    text("Game Over!", width / 2, height / 2 - 40);
-    textSize(20);
-    text("Pressione 'R' para reiniciar", width / 2, height / 2 + 20);
+    text("Game Over", width / 2, height / 2);
+    noLoop();
     return;
   }
 
-  // Adicionar e mover obstáculos
-  if (frameCount % 60 === 0) {
-    obstacles.push(new Obstacle());
-  }
+  // Desenha a cidade (parte superior da tela)
+  fill(150, 150, 150); // Cor da cidade
+  rect(0, 0, width, 50);
 
+  // Atualiza e desenha os obstáculos
   for (let i = obstacles.length - 1; i >= 0; i--) {
     obstacles[i].update();
     obstacles[i].show();
 
-    // Verificar colisão com o jogador
-    if (obstacles[i].hits(player)) {
+    // Verifica se o jogador colidiu com algum obstáculo
+    if (player.collidesWith(obstacles[i])) {
       gameOver = true;
     }
 
-    // Remover obstáculos que saíram da tela
-    if (obstacles[i].offscreen()) {
+    // Remove obstáculos que saíram da tela
+    if (obstacles[i].x + obstacles[i].width < 0) {
       obstacles.splice(i, 1);
       score++;
     }
   }
 
-  // Mostrar o jogador
+  // Atualiza e desenha o jogador
   player.update();
   player.show();
 
-  // Exibir pontuação
-  textSize(18);
+  // Cria novos obstáculos a cada 60 quadros
+  if (frameCount % 60 == 0 && !gameOver) {
+    obstacles.push(new Obstacle());
+  }
+
+  // Mostra a pontuação
+  textSize(16);
+  textAlign(LEFT, TOP);
   fill(0);
-  text("Pontuação: " + score, 30, 30);
+  text('Pontos: ' + score, 10, 10);
 }
 
-function keyPressed() {
-  if (keyCode === UP_ARROW) {
-    player.move(-1);
-  } else if (keyCode === DOWN_ARROW) {
-    player.move(1);
-  }
-}
-
-function keyReleased() {
-  if (keyCode === UP_ARROW || keyCode === DOWN_ARROW) {
-    player.move(0);
-  }
-}
-
-function keyTyped() {
-  if (key === 'r' || key === 'R') {
-    // Reiniciar o jogo
-    gameOver = false;
-    obstacles = [];
-    score = 0;
-    player = new Player();
-  }
-}
-
-// Classe do jogador
+// Função para o jogador
 class Player {
   constructor() {
-    this.x = width / 2;
-    this.y = height - 50;
-    this.size = 30;
-    this.ySpeed = 0;
+    this.x = 50;
+    this.y = height - 70;
+    this.size = 20;
+    this.speed = 5;
   }
 
   update() {
-    this.y += this.ySpeed * 5;
-    this.y = constrain(this.y, 0, height - this.size); // Limitar ao espaço da tela
-  }
-
-  move(dir) {
-    this.ySpeed = dir;
+    // Movimento com as teclas de seta
+    if (keyIsDown(UP_ARROW) && this.y > 50) {
+      this.y -= this.speed;
+    }
+    if (keyIsDown(DOWN_ARROW) && this.y < height - this.size) {
+      this.y += this.speed;
+    }
+    if (keyIsDown(LEFT_ARROW) && this.x > 0) {
+      this.x -= this.speed;
+    }
+    if (keyIsDown(RIGHT_ARROW) && this.x < width - this.size) {
+      this.x += this.speed;
+    }
   }
 
   show() {
-    fill(0);
-    noStroke();
-    rect(this.x - this.size / 2, this.y, this.size, this.size);
+    fill(0, 100, 255); // Cor do jogador
+    rect(this.x, this.y, this.size, this.size);
+  }
+
+  // Função de colisão com obstáculos
+  collidesWith(obstacle) {
+    return this.x < obstacle.x + obstacle.width &&
+           this.x + this.size > obstacle.x &&
+           this.y < obstacle.y + obstacle.height &&
+           this.y + this.size > obstacle.y;
   }
 }
 
-// Classe dos obstáculos
+// Função para os obstáculos
 class Obstacle {
   constructor() {
-    this.x = random(width);
-    this.y = -20;
-    this.size = random(20, 40);
-    this.speed = random(3, 6);
+    this.width = random(30, 60);
+    this.height = random(20, 50);
+    this.x = width;
+    this.y = random(50, height - 70); // Obstáculos começam na região do campo
+    this.speed = 5;
   }
 
   update() {
-    this.y += this.speed;
+    this.x -= this.speed; // Move o obstáculo para a esquerda
   }
 
   show() {
-    fill(255, 0, 0);
-    noStroke();
-    rect(this.x - this.size / 2, this.y, this.size, this.size);
+    fill(255, 0, 0); // Cor dos obstáculos
+    rect(this.x, this.y, this.width, this.height);
   }
-
-  offscreen() {
-    return this.y > height;
-  }
-
-  hits(player) {
-    // Verificar se o jogador colidiu com o obstáculo
-    let pLeft = player.x - player.size / 2;
-    let pRight = player.x + player.size / 2;
-    let pTop = player.y;
-    let pBottom = player.y + player.size;
-
-    let oLeft = this.x - this.size / 2;
-    let oRight = this.x + this.size / 2;
-    let oTop = this.y;
-    let oBottom = this.y + this.size;
-
-    // Se houver interseção, significa colisão
-    return !(pRight < oLeft || pLeft > oRight || pBottom < oTop || pTop > oBottom);
-  }
-}
 }
