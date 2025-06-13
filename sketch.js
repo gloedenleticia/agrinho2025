@@ -1,64 +1,66 @@
-let trator; // objeto do trator
-let milhos = []; // array que guarda os milhos caindo
-let pontos = 0; // contador de milhos colhidos
-let jogoAtivo = true; // define se o jogo está rodando
-let limiteMilhos = 30; // número de milhos necessários para vencer
-let fundo; // imagem de fundo
-
-function preload() {
-  // Carrega a imagem de fundo antes do jogo iniciar
-  fundo = loadImage('fundo.avif');
-}
+// Variáveis principais do jogo
+let trator;                  // Objeto do trator (personagem controlado)
+let milhos = [];             // Lista para armazenar os milhos na tela
+let pontos = 0;              // Contador de milhos colhidos
+let jogoAtivo = false;       // Indica se o jogo está em andamento
+let jogoIniciado = false;    // Indica se o jogador já iniciou o jogo
+let limiteMilhos = 30;       // Quantidade de milhos que o jogador precisa colher
 
 function setup() {
-  createCanvas(400, 600); // cria a tela do jogo com 400x600 pixels
-  trator = new Trator(); // cria uma instância do trator
-  textAlign(CENTER, CENTER); // centraliza os textos horizontal e verticalmente
+  createCanvas(400, 600);     // Cria uma tela de 400x600 pixels
+  trator = new Trator();      // Cria uma nova instância do trator
+  textAlign(CENTER, CENTER);  // Alinha o texto ao centro horizontal e vertical
 }
 
 function draw() {
-  image(fundo, 0, 0, width, height); // desenha a imagem de fundo no canvas
+  background(144, 238, 144); // Define a cor de fundo (verde-claro, como um campo)
 
+  // Tela de instrução antes do jogo começar
+  if (!jogoIniciado) {
+    fill(0);                               // Define a cor do texto como preta
+    textSize(22);                          // Tamanho maior para o título
+    text("🌽 Você deve colher 30 milhos, boa sorte! 🌽", width / 2, height / 2 - 20);
+    textSize(16);                          // Tamanho menor para instrução
+    text("Pressione qualquer tecla para começar", width / 2, height / 2 + 20);
+    return;                                // Encerra a função draw() até o jogador começar
+  }
+
+  // Jogo ativo
   if (jogoAtivo) {
-    fill(255); // define a cor do texto como branco
-    stroke(0); // define a borda do texto como preta
-    strokeWeight(2); // espessura da borda do texto
-    textSize(16); // tamanho do texto
-    // Mostra os pontos colhidos na parte de cima
-    text("🌽 Colhidos: " + pontos + " / " + limiteMilhos, width / 2, 30);
+    fill(0);                                 // Texto preto
+    textSize(16);                            // Tamanho padrão
+    text("🌽 Colhidos: " + pontos + " / " + limiteMilhos, width / 2, 30); // Placar
 
-    trator.mostrar(); // desenha o trator
-    trator.mover();   // move o trator com base na tecla pressionada
+    trator.mostrar();                        // Exibe o trator
+    trator.mover();                          // Move o trator conforme direção
 
-    // A cada 60 quadros, adiciona um milho novo na tela
+    // A cada 60 quadros, gera um novo milho
     if (frameCount % 60 === 0) {
-      milhos.push(new Milho());
+      milhos.push(new Milho());              // Adiciona novo milho ao array
     }
 
-    // Laço que percorre todos os milhos na tela
+    // Percorre os milhos de trás pra frente (para evitar erros ao remover elementos)
     for (let i = milhos.length - 1; i >= 0; i--) {
-      milhos[i].mostrar(); // desenha o milho
-      milhos[i].mover();   // faz o milho cair
+      milhos[i].mostrar();                   // Mostra o milho
+      milhos[i].mover();                     // Move o milho para baixo
 
-      // Verifica se o milho foi colhido pelo trator
+      // Verifica se o milho foi colhido
       if (milhos[i].colhido(trator)) {
-        milhos.splice(i, 1); // remove o milho do array
-        pontos++; // aumenta os pontos
-      } 
-      // Remove o milho se sair da tela
-      else if (milhos[i].y > height) {
-        milhos.splice(i, 1);
+        milhos.splice(i, 1);                 // Remove o milho da lista
+        pontos++;                            // Adiciona ponto
+      } else if (milhos[i].y > height) {
+        milhos.splice(i, 1);                 // Remove milho que saiu da tela
       }
     }
 
-    // Verifica se o jogador já colheu 30 milhos
+    // Verifica se o jogador já colheu o suficiente
     if (pontos >= limiteMilhos) {
-      jogoAtivo = false; // encerra o jogo
+      jogoAtivo = false;                     // Encerra o jogo
     }
 
   } else {
-    // Tela final quando o jogador ganha
-    fill(0, 150, 0); // cor do texto verde escuro
+    // Tela final após vitória
+    fill(0, 150, 0);                          // Cor verde escura
     textSize(28);
     text("🎉 Parabéns, colheita concluída! 🎉", width / 2, height / 2 - 20);
     textSize(18);
@@ -67,69 +69,78 @@ function draw() {
   }
 }
 
-// Detecta quando o jogador pressiona uma tecla
 function keyPressed() {
+  // Começa o jogo ao pressionar qualquer tecla
+  if (!jogoIniciado) {
+    jogoIniciado = true;
+    jogoAtivo = true;
+    return;
+  }
+
+  // Move o trator para a esquerda
   if (keyCode === LEFT_ARROW) {
-    trator.dir = -1; // move o trator para a esquerda
-  } else if (keyCode === RIGHT_ARROW) {
-    trator.dir = 1; // move o trator para a direita
-  } else if (key === 'r' || key === 'R') {
-    reiniciarJogo(); // reinicia o jogo se apertar R
+    trator.dir = -1;
+  }
+  // Move o trator para a direita
+  else if (keyCode === RIGHT_ARROW) {
+    trator.dir = 1;
+  }
+  // Reinicia o jogo ao pressionar R
+  else if (key === 'r' || key === 'R') {
+    reiniciarJogo();
   }
 }
 
-// Detecta quando a tecla é solta
 function keyReleased() {
-  trator.dir = 0; // para o trator
+  trator.dir = 0; // Para o trator quando a tecla é solta
 }
 
-// Reinicia todas as variáveis e objetos para jogar novamente
+// Função para reiniciar o jogo
 function reiniciarJogo() {
   jogoAtivo = true;
   pontos = 0;
-  milhos = [];
-  trator = new Trator();
+  milhos = [];             // Esvazia a lista de milhos
+  trator = new Trator();   // Cria um novo trator
 }
 
-// Classe que representa o trator
+// Classe que representa o trator (jogador)
 class Trator {
   constructor() {
-    this.x = width / 2; // posição horizontal no centro
-    this.y = height - 60; // posição vertical próxima da parte de baixo
-    this.dir = 0; // direção: -1 para esquerda, 1 para direita, 0 para parado
+    this.x = width / 2;        // Posição inicial horizontal
+    this.y = height - 60;      // Posição vertical (perto do chão)
+    this.dir = 0;              // Direção: -1 esquerda, 1 direita, 0 parado
   }
 
   mostrar() {
-    textSize(32);
-    text("🚜", this.x, this.y); // desenha o emoji do trator
+    textSize(32);              // Tamanho do emoji do trator
+    text("🚜", this.x, this.y); // Mostra o trator na posição atual
   }
 
   mover() {
-    this.x += this.dir * 5; // move o trator na direção definida
-    this.x = constrain(this.x, 20, width - 20); // impede de sair da tela
+    this.x += this.dir * 5;                         // Move o trator
+    this.x = constrain(this.x, 20, width - 20);     // Impede que saia da tela
   }
 }
 
-// Classe que representa o milho caindo
+// Classe que representa o milho (objeto a ser colhido)
 class Milho {
   constructor() {
-    this.x = random(20, width - 20); // posição horizontal aleatória
-    this.y = -20; // começa fora da tela (em cima)
-    this.vel = random(2, 4); // velocidade de queda aleatória
+    this.x = random(20, width - 20); // Posição horizontal aleatória
+    this.y = -20;                    // Começa fora da tela
+    this.vel = random(2, 4);         // Velocidade aleatória de queda
   }
 
   mostrar() {
-    textSize(28);
-    text("🌽", this.x, this.y); // desenha o emoji do milho
+    textSize(28);                    // Tamanho do emoji do milho
+    text("🌽", this.x, this.y);      // Mostra o milho
   }
 
   mover() {
-    this.y += this.vel; // faz o milho cair
+    this.y += this.vel;             // Faz o milho cair
   }
 
   colhido(trator) {
-    // Verifica a distância entre o milho e o trator
-    let d = dist(this.x, this.y, trator.x, trator.y);
-    return d < 30; // se estiver perto o suficiente, considera colhido
+    let d = dist(this.x, this.y, trator.x, trator.y); // Distância entre milho e trator
+    return d < 30;                // Considera colhido se estiver próximo o suficiente
   }
 }
